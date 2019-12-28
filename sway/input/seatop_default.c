@@ -741,6 +741,28 @@ static void handle_pointer_axis(struct sway_seat *seat,
 	free(dev_id);
 
 	if (!handled) {
+		// Empty workspace
+		if (on_workspace) {
+			seat_set_focus(seat, node);
+
+		// Layer surface
+		} else if (surface && wlr_surface_is_layer_surface(surface)) {
+			struct wlr_layer_surface_v1 *layer =
+				wlr_layer_surface_v1_from_wlr_surface(surface);
+			if (layer->current.keyboard_interactive) {
+				seat_set_focus_layer(seat, layer);
+			}
+
+		// Container surface
+		} else if (surface && cont) {
+			seat_set_focus_container(seat, cont);
+
+		// Container surface or decorations
+		} else if (cont) {
+			node = seat_get_focus_inactive(seat, &cont->node);
+			seat_set_focus(seat, node);
+		}
+
 		wlr_seat_pointer_notify_axis(cursor->seat->wlr_seat, event->time_msec,
 			event->orientation, scroll_factor * event->delta,
 			round(scroll_factor * event->delta_discrete), event->source);
