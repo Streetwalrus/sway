@@ -274,7 +274,8 @@ void view_autoconfigure(struct sway_view *view) {
 				|| config->hide_edge_borders == E_HORIZONTAL) {
 			con->pending.border_top = con->pending.y != ws->y;
 			int bottom_y = con->pending.y + con->pending.height;
-			con->pending.border_bottom = bottom_y != ws->y + ws->height;
+			con->pending.border_bottom = bottom_y != ws->y + ws->height
+					&& con->pending.border != B_NORMAL;
 		}
 
 		bool smart = config->hide_edge_borders_smart == ESMART_ON ||
@@ -305,6 +306,17 @@ void view_autoconfigure(struct sway_view *view) {
 				y_offset = container_titlebar_height() * siblings->length;
 				con->pending.border_top = false;
 			}
+		}
+	}
+
+	if (config->hide_edge_borders == E_BOTH
+			|| config->hide_edge_borders == E_HORIZONTAL) {
+		struct sway_container *a = container_toplevel_ancestor(con);
+		int bottom_y = con->pending.y + con->pending.height;
+		int a_bottom_y = a->pending.y + a->pending.height;
+		if (container_is_floating(a)) {
+			con->pending.border_bottom = bottom_y == a_bottom_y
+					|| con->pending.border != B_NORMAL;
 		}
 	}
 
